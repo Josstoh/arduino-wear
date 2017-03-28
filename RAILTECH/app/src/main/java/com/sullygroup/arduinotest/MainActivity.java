@@ -42,6 +42,7 @@ public class MainActivity extends WearableActivity implements GoogleApiClient.Co
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setTheme(R.style.AppTheme);
         setContentView(R.layout.activity_main);
 
         mRecyclerView = (RecyclerView) findViewById(R.id.recycler_view);
@@ -49,7 +50,7 @@ public class MainActivity extends WearableActivity implements GoogleApiClient.Co
 
         // specify an adapter (see also next example)
         list = new ArrayList<>();
-        list.add("Temperature and humidity");
+        list.add("Temperature\nand humidity");
         list.add(new Stats("Temp.",-1,R.drawable.ic_thermometer));
         list.add(new Stats("Humi.",-1,R.drawable.ic_humidity));
         list.add("Rotate");
@@ -137,11 +138,15 @@ public class MainActivity extends WearableActivity implements GoogleApiClient.Co
                 DataItem item = event.getDataItem();
                 if (item.getUri().getPath().compareTo("/stats/temp") == 0) {
                     DataMap dataMap = DataMapItem.fromDataItem(item).getDataMap();
-                    updateTemp(dataMap.getLong("value"));
+                    updateTemp(dataMap.getInt("value"));
                 }
                 else if(item.getUri().getPath().compareTo("/stats/hum") == 0) {
                     DataMap dataMap = DataMapItem.fromDataItem(item).getDataMap();
-                    updateHum(dataMap.getLong("value"));
+                    updateHum(dataMap.getInt("value"));
+                }
+                else if(item.getUri().getPath().compareTo("/rotate") == 0) {
+                    DataMap dataMap = DataMapItem.fromDataItem(item).getDataMap();
+                    updateRotate(dataMap.getInt("value"));
                 }
             }
         }
@@ -149,13 +154,18 @@ public class MainActivity extends WearableActivity implements GoogleApiClient.Co
         dataEventBuffer.release();
     }
 
-    private void updateTemp(long temp) {
-        ((Stats)list.get(1)).setValue((int)temp);
+    private void updateRotate(int value) {
+        list.set(4,value);
         mAdapter.notifyDataSetChanged();
     }
 
-    private void updateHum(long hum) {
-        ((Stats)list.get(2)).setValue((int)hum);
+    private void updateTemp(int temp) {
+        ((Stats)list.get(1)).setValue(temp);
+        mAdapter.notifyDataSetChanged();
+    }
+
+    private void updateHum(int hum) {
+        ((Stats)list.get(2)).setValue(hum);
         mAdapter.notifyDataSetChanged();
     }
 

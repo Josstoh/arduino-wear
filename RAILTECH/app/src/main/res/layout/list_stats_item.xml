@@ -4,8 +4,11 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:orientation="vertical">
+    android:layout_height="80dp"
+    android:orientation="vertical"
+    android:paddingTop="5dp"
+    android:paddingBottom="5dp"
+    android:background="@color/background">
 
     <TextView
         android:id="@+id/name"
@@ -22,16 +25,19 @@
         <ImageView
             android:id="@+id/icon"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_gravity="center"
             android:layout_weight="1"
             android:src="@drawable/ic_thermometer" />
 
         <TextView
             android:id="@+id/value"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
+            android:layout_height="match_parent"
+            android:layout_gravity="center_horizontal"
             android:layout_weight="1"
+            android:background="@drawable/circle_background"
+            android:gravity="center"
             android:text="TextView"
             android:textAppearance="@style/TextAppearance.AppCompat.Title"
             tools:text="Titre" />

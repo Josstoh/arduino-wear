@@ -88,6 +88,7 @@ public class MyAdapter extends RecyclerView.Adapter<ViewHolder> {
         public void bind(Object o) {
             int v = (int) o;
             mSeekBar.setProgress(v);
+            mTextView.setText(activity.getString(R.string.rotate,v));
         }
     }
 
@@ -101,14 +102,16 @@ public class MyAdapter extends RecyclerView.Adapter<ViewHolder> {
 
     @Override
     public int getItemViewType(int position) {
+        if(position == 0)
+            return 0;
         Object o = mDataset.get(position);
         if(o instanceof String) {
-            return 0;
-        }
-        else if (o instanceof Stats){
             return 1;
         }
-        return 2;
+        else if (o instanceof Stats){
+            return 2;
+        }
+        return 3;
     }
 
     @Override
@@ -116,12 +119,15 @@ public class MyAdapter extends RecyclerView.Adapter<ViewHolder> {
         View view;
         switch (viewType) {
             case 0:
-                view = LayoutInflater.from(parent.getContext()).inflate(R.layout.list_title_item,parent,false);
+                view = LayoutInflater.from(parent.getContext()).inflate(R.layout.list_main_title_item,parent,false);
                 return new TitleViewHolder(view);
             case 1:
+                view = LayoutInflater.from(parent.getContext()).inflate(R.layout.list_title_item,parent,false);
+                return new TitleViewHolder(view);
+            case 2:
                 view = LayoutInflater.from(parent.getContext()).inflate(R.layout.list_stats_item,parent,false);
                 return new StatsViewHolder(view);
-            case 2:
+            case 3:
                 view = LayoutInflater.from(parent.getContext()).inflate(R.layout.list_seekbar_item,parent,false);
                 return new SeekBarViewHolder(view);
             default:
@@ -133,17 +139,18 @@ public class MyAdapter extends RecyclerView.Adapter<ViewHolder> {
     public void onBindViewHolder(final RecyclerView.ViewHolder holder, final int position) {
         switch (holder.getItemViewType()) {
             case 0:
+            case 1:
                 TitleViewHolder viewHolder0 = (TitleViewHolder) holder;
                 viewHolder0.bind(mDataset.get(position));
                 StaggeredGridLayoutManager.LayoutParams layoutParams = (StaggeredGridLayoutManager.LayoutParams) viewHolder0.itemView.getLayoutParams();
                 layoutParams.setFullSpan(true);
                 break;
 
-            case 1:
+            case 2:
                 StatsViewHolder viewHolder1 = (StatsViewHolder) holder;
                 viewHolder1.bind(mDataset.get(position));
                 break;
-            case 2:
+            case 3:
                 SeekBarViewHolder viewHolder2 = (SeekBarViewHolder) holder;
                 viewHolder2.bind(mDataset.get(position));
                 StaggeredGridLayoutManager.LayoutParams layoutParams2 = (StaggeredGridLayoutManager.LayoutParams) viewHolder2.itemView.getLayoutParams();
