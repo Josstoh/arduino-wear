@@ -55,23 +55,16 @@ public class MainActivity extends WearableActivity implements GoogleApiClient.Co
         list.add(new Stats("Humi.",-1,R.drawable.ic_humidity));
         list.add("Rotate");
         list.add(90);
+        list.add("LED Color");
+        list.add(new int[] {0,255,100});
         mAdapter = new MyAdapter(list,this);
         mRecyclerView.setAdapter(mAdapter);
-
-        /*fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-
-            }
-        });*/
 
         mGoogleApiClient = new GoogleApiClient.Builder(this)
                 .addConnectionCallbacks(this)
                 .addOnConnectionFailedListener(this)
                 .addApi(Wearable.API)
                 .build();
-
     }
 
     private String ConnectedToArduinoNodeId = null;
@@ -148,10 +141,19 @@ public class MainActivity extends WearableActivity implements GoogleApiClient.Co
                     DataMap dataMap = DataMapItem.fromDataItem(item).getDataMap();
                     updateRotate(dataMap.getInt("value"));
                 }
+                else if(item.getUri().getPath().compareTo("/color") == 0) {
+                    DataMap dataMap = DataMapItem.fromDataItem(item).getDataMap();
+                    //updateColor(dataMap.getInt("red"),dataMap.getInt("red"),dataMap.getInt("blue"));
+                }
             }
         }
 
         dataEventBuffer.release();
+    }
+
+    private void updateColor(int red, int green, int blue) {
+        list.set(6,new int[] {red,green,blue});
+        mAdapter.notifyDataSetChanged();
     }
 
     private void updateRotate(int value) {
