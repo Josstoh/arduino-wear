@@ -27,6 +27,11 @@ import java.util.List;
 public class MyAdapter extends RecyclerView.Adapter<ViewHolder> {
     private List<Object> mDataset;
     private MainActivity activity;
+    private final int MAIN_TITLE_VIEW_HOLDER = 0;
+    private final int TITLE_VIEW_HOLDER = 1;
+    private final int STATS_VIEW_HOLDER = 2;
+    private final int ROTATE_VIEW_HOLDER = 3;
+    private final int COLOR_SELECTOR_VIEW_HOLDER = 4;
 
     /**
      * ViewHolder qui contient la vue pour le titre d'une section.
@@ -38,6 +43,7 @@ public class MyAdapter extends RecyclerView.Adapter<ViewHolder> {
             super(v);
             mTextView = (TextView) v.findViewById(R.id.title);
         }
+        // Appellé pour mettre à jour la vue avec les nouvelles données
         void bind(Object o) {
             String s = (String) o;
             mTextView.setText(s);
@@ -64,14 +70,15 @@ public class MyAdapter extends RecyclerView.Adapter<ViewHolder> {
             mImageView.setImageResource(s.getIcon());
         }
     }
+
     /**
-     * ViewHolder qui contient les vues pour les stats(température et l'humidité).
+     * ViewHolder qui contient les vues pour la rotation (l'angle et un sélecteur).
      */
-    private class SeekBarViewHolder extends RecyclerView.ViewHolder {
+    private class RotateViewHolder extends RecyclerView.ViewHolder {
         SeekBar mSeekBar;
         TextView mTextView;
 
-        SeekBarViewHolder(View v){
+        RotateViewHolder(View v){
             super(v);
             mSeekBar = (SeekBar) v.findViewById(R.id.seekBar);
             mTextView = (TextView) v.findViewById(R.id.textView);
@@ -107,6 +114,9 @@ public class MyAdapter extends RecyclerView.Adapter<ViewHolder> {
         }
     }
 
+    /**
+     * ViewHolder qui contient les vues pour la couleur de la LED(3 composantes de couleurs RGB et le bouton).
+     */
     private class ColorSelectorViewHolder extends RecyclerView.ViewHolder {
         EditText redEditText;
         EditText greenEditText;
@@ -198,7 +208,7 @@ public class MyAdapter extends RecyclerView.Adapter<ViewHolder> {
         }
     }
 
-    public MyAdapter(List<Object> myDataset, Context mContext) {
+    MyAdapter(List<Object> myDataset, Context mContext) {
         mDataset = myDataset;
         if(mContext instanceof MainActivity)
             activity = (MainActivity) mContext;
@@ -208,38 +218,39 @@ public class MyAdapter extends RecyclerView.Adapter<ViewHolder> {
 
     @Override
     public int getItemViewType(int position) {
+        // retourne l'ID du type de vue
         if(position == 0)
-            return 0;
+            return MAIN_TITLE_VIEW_HOLDER;
         Object o = mDataset.get(position);
         if(o instanceof String) {
-            return 1;
+            return TITLE_VIEW_HOLDER;
         }
         else if (o instanceof Stats){
-            return 2;
+            return STATS_VIEW_HOLDER;
         }
         else if(o instanceof int[]){
-            return 4;
+            return COLOR_SELECTOR_VIEW_HOLDER;
         }
-        return 3;
+        return ROTATE_VIEW_HOLDER;
     }
 
     @Override
     public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         View view;
         switch (viewType) {
-            case 0:
+            case MAIN_TITLE_VIEW_HOLDER:
                 view = LayoutInflater.from(parent.getContext()).inflate(R.layout.list_main_title_item,parent,false);
                 return new TitleViewHolder(view);
-            case 1:
+            case TITLE_VIEW_HOLDER:
                 view = LayoutInflater.from(parent.getContext()).inflate(R.layout.list_title_item,parent,false);
                 return new TitleViewHolder(view);
-            case 2:
+            case STATS_VIEW_HOLDER:
                 view = LayoutInflater.from(parent.getContext()).inflate(R.layout.list_stats_item,parent,false);
                 return new StatsViewHolder(view);
-            case 3:
+            case ROTATE_VIEW_HOLDER:
                 view = LayoutInflater.from(parent.getContext()).inflate(R.layout.list_seekbar_item,parent,false);
-                return new SeekBarViewHolder(view);
-            case 4:
+                return new RotateViewHolder(view);
+            case COLOR_SELECTOR_VIEW_HOLDER:
                 view = LayoutInflater.from(parent.getContext()).inflate(R.layout.list_color_selector_item,parent,false);
                 return new ColorSelectorViewHolder(view);
             default:
@@ -250,25 +261,25 @@ public class MyAdapter extends RecyclerView.Adapter<ViewHolder> {
     @Override
     public void onBindViewHolder(final RecyclerView.ViewHolder holder, final int position) {
         switch (holder.getItemViewType()) {
-            case 0:
-            case 1:
+            case MAIN_TITLE_VIEW_HOLDER:
+            case TITLE_VIEW_HOLDER:
                 TitleViewHolder viewHolder0 = (TitleViewHolder) holder;
                 viewHolder0.bind(mDataset.get(position));
                 StaggeredGridLayoutManager.LayoutParams layoutParams = (StaggeredGridLayoutManager.LayoutParams) viewHolder0.itemView.getLayoutParams();
                 layoutParams.setFullSpan(true);
                 break;
 
-            case 2:
+            case STATS_VIEW_HOLDER:
                 StatsViewHolder viewHolder1 = (StatsViewHolder) holder;
                 viewHolder1.bind(mDataset.get(position));
                 break;
-            case 3:
-                SeekBarViewHolder viewHolder2 = (SeekBarViewHolder) holder;
+            case ROTATE_VIEW_HOLDER:
+                RotateViewHolder viewHolder2 = (RotateViewHolder) holder;
                 viewHolder2.bind(mDataset.get(position));
                 StaggeredGridLayoutManager.LayoutParams layoutParams2 = (StaggeredGridLayoutManager.LayoutParams) viewHolder2.itemView.getLayoutParams();
                 layoutParams2.setFullSpan(true);
                 break;
-            case 4:
+            case COLOR_SELECTOR_VIEW_HOLDER:
                 ColorSelectorViewHolder viewHolder3 = (ColorSelectorViewHolder) holder;
                 viewHolder3.bind(mDataset.get(position));
                 StaggeredGridLayoutManager.LayoutParams layoutParams3 = (StaggeredGridLayoutManager.LayoutParams) viewHolder3.itemView.getLayoutParams();
@@ -276,7 +287,6 @@ public class MyAdapter extends RecyclerView.Adapter<ViewHolder> {
         }
     }
 
-    // Return the size of your dataset (invoked by the layout manager)
     @Override
     public int getItemCount() {
         return mDataset.size();

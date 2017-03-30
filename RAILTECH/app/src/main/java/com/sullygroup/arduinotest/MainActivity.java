@@ -11,7 +11,9 @@ import android.widget.TextView;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.PendingResult;
 import com.google.android.gms.common.api.ResultCallback;
+import com.google.android.gms.common.api.Status;
 import com.google.android.gms.wearable.CapabilityApi;
 import com.google.android.gms.wearable.CapabilityInfo;
 import com.google.android.gms.wearable.DataApi;
@@ -27,17 +29,23 @@ import com.google.android.gms.wearable.Wearable;
 import java.util.ArrayList;
 import java.util.Set;
 
+/**
+ * Ecran principal de l'application, il affiche les infos de la carte et des contrôles.
+ */
 public class MainActivity extends WearableActivity implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, DataApi.DataListener {
 
     private static final String TAG = "MainActivity";
-    public static String CONNECT_TO_ARDUINO_CAPABILITY = "connect_to_arduino";
+
+    public static final String CONNECT_TO_ARDUINO_CAPABILITY = "connect_to_arduino";
     public static final String CONNECT_TO_ARDUINO_MESSAGE_PATH = "/connect_to_arduino";
+
     GoogleApiClient mGoogleApiClient;
-    FloatingActionButton fab;
+    CapabilityApi.CapabilityListener capabilityListener;
     RecyclerView mRecyclerView;
     MyAdapter mAdapter;
     ArrayList<Object> list;
-
+    // Node qui est connecté à la carte Arduino (le téléphone)
+    private String ConnectedToArduinoNodeId = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -48,7 +56,7 @@ public class MainActivity extends WearableActivity implements GoogleApiClient.Co
         mRecyclerView = (RecyclerView) findViewById(R.id.recycler_view);
         mRecyclerView.setLayoutManager(new StaggeredGridLayoutManager(2, StaggeredGridLayoutManager.VERTICAL));
 
-        // specify an adapter (see also next example)
+        // liste des éléments qui composent la RecyclerView
         list = new ArrayList<>();
         list.add("Temperature\nand humidity");
         list.add(new Stats("Temp.",-1,R.drawable.ic_thermometer));
@@ -57,6 +65,7 @@ public class MainActivity extends WearableActivity implements GoogleApiClient.Co
         list.add(90);
         list.add("LED Color");
         list.add(new int[] {0,255,100});
+
         mAdapter = new MyAdapter(list,this);
         mRecyclerView.setAdapter(mAdapter);
 
@@ -67,13 +76,20 @@ public class MainActivity extends WearableActivity implements GoogleApiClient.Co
                 .build();
     }
 
-    private String ConnectedToArduinoNodeId = null;
-
+    /**
+     * Met à jour le noeud connecté à la carte.
+     * @param capabilityInfo
+     */
     private void updateConnectToArduinoCapability(CapabilityInfo capabilityInfo) {
         Set<Node> connectedNodes = capabilityInfo.getNodes();
         ConnectedToArduinoNodeId = pickBestNodeId(connectedNodes);
     }
 
+    /**
+     * Choisit le meilleur noeud à utiliser (le téléphone).
+     * @param nodes le set de noeud parmi lequelle choisir
+     * @return le meilleur noeud ou null s'il n'y en a pas.
+     */
     private String pickBestNodeId(Set<Node> nodes) {
         String bestNodeId = null;
         for (Node node : nodes) {
@@ -85,21 +101,23 @@ public class MainActivity extends WearableActivity implements GoogleApiClient.Co
         return bestNodeId;
     }
 
-
-
+    /**
+     * Pour envoyer un message à l'Arduino. Passe par le téléphone.
+     * @param string le message en Bytes à envoyé.
+     */
     public void requestConnectToArduino(byte[] string) {
         Log.d(TAG,"request");
         if (ConnectedToArduinoNodeId != null) {
             Wearable.MessageApi.sendMessage(mGoogleApiClient, ConnectedToArduinoNodeId,
-                    CONNECT_TO_ARDUINO_MESSAGE_PATH, string).setResultCallback(
-                    new ResultCallback<MessageApi.SendMessageResult>(){
-                        @Override
-                        public void onResult(@NonNull MessageApi.SendMessageResult sendMessageResult) {
-                            if (!sendMessageResult.getStatus().isSuccess()) {
-                                Log.e(TAG,"Sending message failed");
-                            }
+                CONNECT_TO_ARDUINO_MESSAGE_PATH, string).setResultCallback(
+                new ResultCallback<MessageApi.SendMessageResult>(){
+                    @Override
+                    public void onResult(@NonNull MessageApi.SendMessageResult sendMessageResult) {
+                        if (!sendMessageResult.getStatus().isSuccess()) {
+                            Log.e(TAG,"Sending message failed");
                         }
                     }
+                }
             );
         } else {
             Log.e(TAG,"Unable to retrieve node which is connected to arduino");
@@ -116,6 +134,7 @@ public class MainActivity extends WearableActivity implements GoogleApiClient.Co
     protected void onStop() {
         if (null != mGoogleApiClient && mGoogleApiClient.isConnected()) {
             Wearable.DataApi.removeListener(mGoogleApiClient, this);
+            Wearable.CapabilityApi.removeCapabilityListener(mGoogleApiClient,capabilityListener,CONNECT_TO_ARDUINO_CAPABILITY);
             mGoogleApiClient.disconnect();
         }
         super.onStop();
@@ -147,25 +166,39 @@ public class MainActivity extends WearableActivity implements GoogleApiClient.Co
                 }
             }
         }
-
         dataEventBuffer.release();
     }
-
+    /**
+     * Met à jour l'affichage des champs de la couleur de la LED
+     * @param red nouvelle valeur pour le rouge
+     * @param green nouvelle valeur pour le vert
+     * @param blue nouvelle valeur pour le bleu
+     */
     private void updateColor(int red, int green, int blue) {
         list.set(6,new int[] {red,green,blue});
         mAdapter.notifyDataSetChanged();
     }
 
+    /**
+     * Met à jour l'affichage du champ Rotate
+     * @param value nouvelle valeur
+     */
     private void updateRotate(int value) {
         list.set(4,value);
         mAdapter.notifyDataSetChanged();
     }
-
+    /**
+     * Met à jour l'affichage du champ température
+     * @param temp nouvelle valeur
+     */
     private void updateTemp(int temp) {
         ((Stats)list.get(1)).setValue(temp);
         mAdapter.notifyDataSetChanged();
     }
-
+    /**
+     * Met à jour l'affichage du champ humidité
+     * @param hum nouvelle valeur
+     */
     private void updateHum(int hum) {
         ((Stats)list.get(2)).setValue(hum);
         mAdapter.notifyDataSetChanged();
@@ -178,7 +211,7 @@ public class MainActivity extends WearableActivity implements GoogleApiClient.Co
             Log.d(TAG, "Connected to Google Api Service");
         }
         Wearable.DataApi.addListener(mGoogleApiClient, this);
-        CapabilityApi.CapabilityListener capabilityListener =
+        capabilityListener =
                 new CapabilityApi.CapabilityListener() {
                     @Override
                     public void onCapabilityChanged(CapabilityInfo capabilityInfo) {
@@ -186,9 +219,14 @@ public class MainActivity extends WearableActivity implements GoogleApiClient.Co
                         updateConnectToArduinoCapability(capabilityInfo);
                     }
                 };
-
+        // Pour savoir quand on est connecté au téléphone
         Wearable.CapabilityApi.addCapabilityListener(mGoogleApiClient,
-                capabilityListener,CONNECT_TO_ARDUINO_CAPABILITY);
+                capabilityListener,CONNECT_TO_ARDUINO_CAPABILITY).setResultCallback(new ResultCallback<Status>() {
+            @Override
+            public void onResult(@NonNull Status status) {
+                Log.d(TAG,"capability listener :" + status.isSuccess());
+            }
+        });
 
         Wearable.CapabilityApi.getCapability(mGoogleApiClient, CONNECT_TO_ARDUINO_CAPABILITY,CapabilityApi.FILTER_REACHABLE).setResultCallback(new ResultCallback<CapabilityApi.GetCapabilityResult>() {
             @Override
@@ -196,7 +234,6 @@ public class MainActivity extends WearableActivity implements GoogleApiClient.Co
                 updateConnectToArduinoCapability(getCapabilityResult.getCapability());
             }
         });
-
     }
 
     @Override

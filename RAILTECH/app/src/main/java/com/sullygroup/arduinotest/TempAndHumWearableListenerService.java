@@ -15,6 +15,8 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
+ * Service qui permet de savoir lorsqu'il y a des changements de température/humidité/etc... en
+ * tâche de fond. Et de pouvoir approvisionner {@link TempAndHumProviderService}
  * Created by jocelyn.caraman on 20/03/2017.
  */
 
@@ -39,9 +41,11 @@ public class TempAndHumWearableListenerService extends WearableListenerService {
 
         if (!connectionResult.isSuccess()) {
             Log.e(TAG, "Failed to connect to GoogleApiClient.");
+            dataEvents.release();
             return;
         }
 
+        // Notifie le provider de se mettre à jour.
         ComponentName providerComponentName = new ComponentName(this,TempAndHumProviderService.class);
         ProviderUpdateRequester providerUpdateRequester = new ProviderUpdateRequester(this, providerComponentName);
         providerUpdateRequester.requestUpdateAll();
