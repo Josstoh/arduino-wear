@@ -3,10 +3,12 @@ package com.sullygroup.arduinotest;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
+import android.support.transition.Visibility;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.StaggeredGridLayoutManager;
 import android.support.wearable.activity.WearableActivity;
 import android.util.Log;
+import android.view.View;
 import android.widget.TextView;
 
 import com.google.android.gms.common.ConnectionResult;
@@ -44,6 +46,7 @@ public class MainActivity extends WearableActivity implements GoogleApiClient.Co
     RecyclerView mRecyclerView;
     MyAdapter mAdapter;
     ArrayList<Object> list;
+    TextView connectedTextView;
     // Node qui est connecté à la carte Arduino (le téléphone)
     private String ConnectedToArduinoNodeId = null;
 
@@ -53,6 +56,7 @@ public class MainActivity extends WearableActivity implements GoogleApiClient.Co
         setTheme(R.style.AppTheme);
         setContentView(R.layout.activity_main);
 
+        connectedTextView = (TextView) findViewById(R.id.connected_text_view);
         mRecyclerView = (RecyclerView) findViewById(R.id.recycler_view);
         mRecyclerView.setLayoutManager(new StaggeredGridLayoutManager(2, StaggeredGridLayoutManager.VERTICAL));
 
@@ -94,10 +98,12 @@ public class MainActivity extends WearableActivity implements GoogleApiClient.Co
         String bestNodeId = null;
         for (Node node : nodes) {
             if (node.isNearby()) {
+                connectedTextView.setVisibility(View.GONE);
                 return node.getId();
             }
             bestNodeId = node.getId();
         }
+        connectedTextView.setVisibility(View.VISIBLE);
         return bestNodeId;
     }
 
@@ -228,7 +234,9 @@ public class MainActivity extends WearableActivity implements GoogleApiClient.Co
             }
         });
 
-        Wearable.CapabilityApi.getCapability(mGoogleApiClient, CONNECT_TO_ARDUINO_CAPABILITY,CapabilityApi.FILTER_REACHABLE).setResultCallback(new ResultCallback<CapabilityApi.GetCapabilityResult>() {
+        Wearable.CapabilityApi.getCapability(mGoogleApiClient, CONNECT_TO_ARDUINO_CAPABILITY,
+                CapabilityApi.FILTER_REACHABLE)
+                .setResultCallback(new ResultCallback<CapabilityApi.GetCapabilityResult>() {
             @Override
             public void onResult(@NonNull CapabilityApi.GetCapabilityResult getCapabilityResult) {
                 updateConnectToArduinoCapability(getCapabilityResult.getCapability());
