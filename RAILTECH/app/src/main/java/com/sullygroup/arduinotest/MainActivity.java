@@ -1,5 +1,8 @@
 package com.sullygroup.arduinotest;
 
+import android.app.PendingIntent;
+import android.content.Intent;
+import android.graphics.drawable.Icon;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
@@ -7,6 +10,8 @@ import android.support.transition.Visibility;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.StaggeredGridLayoutManager;
 import android.support.wearable.activity.WearableActivity;
+import android.support.wearable.complications.ComplicationData;
+import android.support.wearable.complications.ComplicationText;
 import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
@@ -22,6 +27,7 @@ import com.google.android.gms.wearable.DataApi;
 import com.google.android.gms.wearable.DataEvent;
 import com.google.android.gms.wearable.DataEventBuffer;
 import com.google.android.gms.wearable.DataItem;
+import com.google.android.gms.wearable.DataItemBuffer;
 import com.google.android.gms.wearable.DataMap;
 import com.google.android.gms.wearable.DataMapItem;
 import com.google.android.gms.wearable.MessageApi;
@@ -240,6 +246,26 @@ public class MainActivity extends WearableActivity implements GoogleApiClient.Co
             @Override
             public void onResult(@NonNull CapabilityApi.GetCapabilityResult getCapabilityResult) {
                 updateConnectToArduinoCapability(getCapabilityResult.getCapability());
+            }
+        });
+
+        PendingResult<DataItemBuffer> result = Wearable.DataApi.getDataItems(mGoogleApiClient);
+        result.setResultCallback(new ResultCallback<DataItemBuffer>() {
+            @Override
+            public void onResult(@NonNull DataItemBuffer dataItems) {
+                for (DataItem item : dataItems) {
+                    if (item.getUri().getPath().equals("/stats/temp")) {
+                        DataMap dataMap = DataMapItem.fromDataItem(item).getDataMap();
+                        int temp = dataMap.getInt("value");
+                        updateTemp(temp);
+                    }
+                    else if(item.getUri().getPath().equals("/stats/hum")) {
+                        DataMap dataMap = DataMapItem.fromDataItem(item).getDataMap();
+                        int hum = dataMap.getInt("value");
+                        updateHum(hum);
+                    }
+                }
+                dataItems.release();
             }
         });
     }

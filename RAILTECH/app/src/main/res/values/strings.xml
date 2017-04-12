@@ -1,8 +1,9 @@
 <resources>
-    <string name="app_name">RAILTECH</string>
+    <string name="app_name">ArduinoTest</string>
     <string name="hello_round">Hello Round World!</string>
     <string name="hello_square">Hello Square World!</string>
 
     <string name="temp">%1$d C°.</string>
     <string name="rotate">%1$d°</string>
+    <string name="preference_complications">com.sullygroup.arduinotest.PREFERENCE_COMPLICATIONS</string>
 </resources>

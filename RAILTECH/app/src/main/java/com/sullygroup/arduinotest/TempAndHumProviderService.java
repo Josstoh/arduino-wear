@@ -1,7 +1,9 @@
 package com.sullygroup.arduinotest;
 
 import android.app.PendingIntent;
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.drawable.Icon;
 import android.os.Bundle;
 import android.provider.Settings;
@@ -45,26 +47,56 @@ public class TempAndHumProviderService extends ComplicationProviderService {
                         result.setResultCallback(new ResultCallback<DataItemBuffer>() {
                             @Override
                             public void onResult(@NonNull DataItemBuffer dataItems) {
+                                int temp = -1;
+                                int hum = -1;
                                 String text = "";
                                 for (DataItem item : dataItems) {
-                                    // TODO: 30/03/2017 ajouter l'humidité
                                     if (item.getUri().getPath().equals("/stats/temp")) {
                                         DataMap dataMap = DataMapItem.fromDataItem(item).getDataMap();
-                                        int temp = dataMap.getInt("value");
+                                        temp = dataMap.getInt("value");
                                         text += " temp. :" + temp + "C°";
                                     }
                                     else if(item.getUri().getPath().equals("/stats/hum")) {
                                         DataMap dataMap = DataMapItem.fromDataItem(item).getDataMap();
-                                        int hum = dataMap.getInt("value");
-                                        text += "hum. :" + hum + "°";
+                                        hum = dataMap.getInt("value");
+                                        text += "hum. :" + hum + "%";
                                     }
                                 }
-                                ComplicationData complicationData = new ComplicationData.Builder(ComplicationData.TYPE_LONG_TEXT)
-                                        .setLongText(ComplicationText.plainText(text))
-                                        .setIcon(Icon.createWithResource(getApplicationContext(), R.drawable.ic_thermometer))
-                                        .setTapAction(PendingIntent.getActivity(getApplicationContext(),0,new Intent(getApplicationContext(),MainActivity.class),0))
-                                        .build();
-                                complicationManager.updateComplicationData(complicationId, complicationData);
+                                ComplicationData complicationData;
+                                if(dataType == ComplicationData.TYPE_SHORT_TEXT){
+                                    // Type icone + valeur
+                                    SharedPreferences sharedPref = getSharedPreferences(
+                                            getString(R.string.preference_complications), Context.MODE_PRIVATE);
+                                    String type = sharedPref.getString(String.valueOf(complicationId), "none");
+                                    Log.d("test",type);
+                                    if(!type.equals("none")) {
+                                        Icon icon;
+                                        if(type.equals("temp")) {
+                                            text = temp + "C°";
+                                            icon = Icon.createWithResource(getApplicationContext(), R.drawable.ic_thermometer);
+                                        }
+                                        else {
+                                            text = hum + "%";
+                                            icon = Icon.createWithResource(getApplicationContext(), R.drawable.ic_humidity);
+                                        }
+                                        complicationData = new ComplicationData.Builder(ComplicationData.TYPE_SHORT_TEXT)
+                                                .setShortText(ComplicationText.plainText(text))
+                                                .setIcon(icon)
+                                                .setTapAction(PendingIntent.getActivity(getApplicationContext(),0,new Intent(getApplicationContext(),MainActivity.class),0))
+                                                .build();
+                                        complicationManager.updateComplicationData(complicationId, complicationData);
+                                    }
+
+                                }
+                                else {
+                                    // Type 2 valeurs (temp et hum)
+                                    complicationData = new ComplicationData.Builder(ComplicationData.TYPE_LONG_TEXT)
+                                            .setLongText(ComplicationText.plainText(text))
+                                            .setIcon(Icon.createWithResource(getApplicationContext(), R.drawable.ic_thermometer))
+                                            .setTapAction(PendingIntent.getActivity(getApplicationContext(),0,new Intent(getApplicationContext(),MainActivity.class),0))
+                                            .build();
+                                    complicationManager.updateComplicationData(complicationId, complicationData);
+                                }
                                 googleApiClient.disconnect();
                                 dataItems.release();
                             }

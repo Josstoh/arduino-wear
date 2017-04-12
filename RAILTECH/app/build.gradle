@@ -29,15 +29,17 @@ android {
     }
 }
 ext {
-    supportlib_version = '25.3.0'
+    supportlib_version = '25.3.1'
+    wearable_version = '2.0.1'
 }
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
-    provided 'com.google.android.wearable:wearable:2.0.0'
-    compile 'com.google.android.support:wearable:2.0.0'
-    compile 'com.google.android.gms:play-services-wearable:10.2.0'
+    provided "com.google.android.wearable:wearable:$wearable_version"
+    compile "com.google.android.support:wearable:$wearable_version"
+    compile 'com.google.android.gms:play-services-wearable:10.2.1'
     compile "com.android.support:design:$supportlib_version"
     compile "com.android.support:appcompat-v7:$supportlib_version"
     compile "com.android.support:cardview-v7:$supportlib_version"
     compile "com.android.support:appcompat-v7:$supportlib_version"
+    compile "com.android.support:recyclerview-v7:$supportlib_version"
 }
