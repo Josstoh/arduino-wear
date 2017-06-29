@@ -1,22 +1,16 @@
-package com.sullygroup.arduinotest;
+package com.sullygroup.arduinotest.complications;
 
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.support.v7.widget.RecyclerView;
-import android.support.v7.widget.StaggeredGridLayoutManager;
 import android.support.wearable.activity.WearableActivity;
 import android.support.wearable.complications.ComplicationData;
 import android.support.wearable.view.CurvedChildLayoutManager;
 import android.support.wearable.view.WearableRecyclerView;
-import android.util.Log;
-import android.view.MotionEvent;
 import android.view.View;
-import android.widget.TextView;
 
-import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.wearable.Wearable;
+import com.sullygroup.arduinotest.R;
 
 import java.util.ArrayList;
 
@@ -24,13 +18,14 @@ import static android.support.wearable.complications.ComplicationProviderService
 import static android.support.wearable.complications.ComplicationProviderService.EXTRA_CONFIG_COMPLICATION_TYPE;
 
 /**
+ * Activité qui permet de configurer les complications de l'applications.
  * Created by jocelyn.caraman on 07/04/2017.
  */
 
 public class ComplicationConfigActivity extends WearableActivity {
     public static final String TAG = "ComplicationConfigAct";
     private WearableRecyclerView mRecyclerView;
-    private ArrayList<String> list;
+    private ArrayList<String[]> list;
     private String complicationId;
 
     @Override
@@ -71,33 +66,37 @@ public class ComplicationConfigActivity extends WearableActivity {
         CurvedChildLayoutManager mChildLayoutManager = new MyLauncherChildLayoutManager(this);
         mRecyclerView.setLayoutManager(mChildLayoutManager);
         list = new ArrayList<>();
-        list.add("temp");
-        list.add("hum");
+        list.add(new String[] {"temp","Temperature"});
+        list.add(new String[] {"hum","Humidity"});
         mRecyclerView.setAdapter(new ConfigAdapter(list,this));
     }
 
+    /**
+     * Méthode pour gérer les clics sur les items du RecyclerView.
+     * @param adapterPosition position de l'item dans le RecyclerView
+     */
     public void handleItemClick(int adapterPosition) {
         SharedPreferences sharedPref = getSharedPreferences(
                 getString(R.string.preference_complications), Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = sharedPref.edit();
-        editor.putString(complicationId,list.get(adapterPosition));
-        Log.d("test0",String.valueOf(adapterPosition));
+        editor.putString(complicationId,list.get(adapterPosition)[0]);
         editor.apply();
         setResult(RESULT_OK);
         finish();
     }
 
-    public class MyLauncherChildLayoutManager extends CurvedChildLayoutManager {
+    /**
+     * Classe permettant l'affichage du RecyclerView en mode "curvé".
+     */
+    private class MyLauncherChildLayoutManager extends CurvedChildLayoutManager {
         /** How much should we scale the icon at most. */
         private static final float MAX_ICON_PROGRESS = 0.65f;
 
         private float mProgressToCenter;
 
-        public MyLauncherChildLayoutManager(Context context) {
+        MyLauncherChildLayoutManager(Context context) {
             super(context);
         }
-
-        //public MyLauncherChildLayoutManager() {}
 
         @Override
         public void updateChild(View child, WearableRecyclerView parent) {

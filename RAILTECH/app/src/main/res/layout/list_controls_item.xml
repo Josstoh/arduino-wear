@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@color/background"
+    android:orientation="vertical"
+    android:paddingBottom="20dp"
+    android:paddingTop="5dp">
+
+    <LinearLayout
+        android:id="@+id/linear_layout_row1"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <Switch
+            android:id="@+id/switch_mode"
+            android:layout_width="200dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:paddingEnd="15dp"
+            android:paddingStart="15dp"
+            android:showText="true"
+            android:text="BT mode"
+            android:textAllCaps="false"
+            android:textOff="off"
+            android:textOn="on"
+            android:textSize="14sp"
+            tools:checked="false" />
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:orientation="horizontal"
+        android:paddingTop="5dp">
+
+        <android.support.design.widget.FloatingActionButton
+            android:id="@+id/fab_connect_disconnect"
+            style="@style/Widget.Design.FloatingActionButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_weight="1"
+            android:clickable="true"
+            android:src="@drawable/ic_connect"
+            app:fabSize="mini"
+            app:rippleColor="@color/grey" />
+
+        <android.support.design.widget.FloatingActionButton
+            android:id="@+id/fab_refresh"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="20dp"
+            android:layout_weight="1"
+            android:clickable="true"
+            android:src="@drawable/ic_refresh"
+            app:fabSize="mini"
+            app:rippleColor="@color/grey" />
+    </LinearLayout>
+
+</LinearLayout>

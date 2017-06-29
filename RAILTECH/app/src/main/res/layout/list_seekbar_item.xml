@@ -18,9 +18,9 @@
 
     <SeekBar
         android:id="@+id/seekBar"
-        android:foregroundTint="@color/primary"
         android:layout_width="match_parent"
         android:layout_height="30dp"
+        android:foregroundTint="@color/primary"
         android:max="145"
-        android:progress="1"/>
+        android:progress="1" />
 </LinearLayout>

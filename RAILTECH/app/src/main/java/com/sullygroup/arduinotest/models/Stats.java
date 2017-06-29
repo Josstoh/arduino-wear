@@ -1,16 +1,15 @@
-package com.sullygroup.arduinotest;
+package com.sullygroup.arduinotest.models;
 
 /**
  * Classe contenant les information pour une stat(température ou humidité).
  * Created by jocelyn.caraman on 21/03/2017.
  */
-
-class Stats {
+public class Stats {
     private String name;
     private int value;
     private int icon;
 
-    Stats(String name, int value, int icon) {
+    public Stats(String name, int value, int icon) {
         this.name = name;
         this.value = value;
         this.icon = icon;
@@ -24,15 +23,15 @@ class Stats {
         this.name = name;
     }
 
-    int getValue() {
+    public int getValue() {
         return value;
     }
 
-    void setValue(int value) {
+    public void setValue(int value) {
         this.value = value;
     }
 
-    int getIcon() {
+    public int getIcon() {
         return icon;
     }
 

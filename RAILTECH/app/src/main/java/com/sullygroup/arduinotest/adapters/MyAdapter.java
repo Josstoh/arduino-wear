@@ -1,6 +1,8 @@
-package com.sullygroup.arduinotest;
+package com.sullygroup.arduinotest.adapters;
 
 import android.content.Context;
+import android.content.SharedPreferences;
+import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.RecyclerView.ViewHolder;
@@ -12,12 +14,23 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.SeekBar;
+import android.widget.Switch;
 import android.widget.TextView;
 
+import com.sullygroup.arduinotest.activities.MainActivity;
+import com.sullygroup.arduinotest.R;
+import com.sullygroup.arduinotest.models.Stats;
+import com.sullygroup.arduinotest.services.BluetoothService;
+import com.sullygroup.arduinotest.services.TempAndHumService;
+
 import java.util.List;
+
+import static com.sullygroup.arduinotest.services.TempAndHumService.*;
 
 /**
  * Adapter pour le RecyclerView du MainActivity.
@@ -25,13 +38,16 @@ import java.util.List;
  */
 
 public class MyAdapter extends RecyclerView.Adapter<ViewHolder> {
-    private List<Object> mDataset;
+    public final static String TAG = "MAAdapter";
+    private List<Object[]> mDataset;
     private MainActivity activity;
-    private final int MAIN_TITLE_VIEW_HOLDER = 0;
-    private final int TITLE_VIEW_HOLDER = 1;
-    private final int STATS_VIEW_HOLDER = 2;
-    private final int ROTATE_VIEW_HOLDER = 3;
-    private final int COLOR_SELECTOR_VIEW_HOLDER = 4;
+    private TempAndHumService tahService;
+    public static final int MAIN_TITLE_VIEW_HOLDER = 0;
+    public static final int TITLE_VIEW_HOLDER = 1;
+    public static final int STATS_VIEW_HOLDER = 2;
+    public static final int ROTATE_VIEW_HOLDER = 3;
+    public static final int COLOR_SELECTOR_VIEW_HOLDER = 4;
+    public static final int CONTROLS_VIEW_HOLDER = 5;
 
     /**
      * ViewHolder qui contient la vue pour le titre d'une section.
@@ -68,6 +84,12 @@ public class MyAdapter extends RecyclerView.Adapter<ViewHolder> {
             mTextView.setText(s.getValue()+"");
             name.setText(s.getName());
             mImageView.setImageResource(s.getIcon());
+            mTextView.post(new Runnable() {
+                @Override
+                public void run() {
+                    mTextView.setHeight(mImageView.getWidth());
+                }
+            });
         }
     }
 
@@ -98,10 +120,9 @@ public class MyAdapter extends RecyclerView.Adapter<ViewHolder> {
                 public void onStopTrackingTouch(SeekBar seekBar) {
                     mTextView.setText(activity.getString(R.string.rotate,progress));
                     if(activity != null){
-                        String command = "c";
-                        command += Integer.toString(progress);
-                        Log.d("Adapter",command);
-                        activity.requestConnectToArduino(command.getBytes());
+                        Bundle bundle = new Bundle(1);
+                        bundle.putInt("angle",progress);
+                        tahService.requestCommand(ROTATE_CMD,bundle);
                     }
 
                 }
@@ -191,9 +212,11 @@ public class MyAdapter extends RecyclerView.Adapter<ViewHolder> {
                     String blue = blueEditText.getText().toString();
                     if(!red.isEmpty() && !green.isEmpty() && !blue.isEmpty()) {
                         if(activity != null){
-                            String command = "d" + red + ";" + green + ";" + blue;
-                            Log.d("Adapter",command);
-                            activity.requestConnectToArduino(command.getBytes());
+                            Bundle bundle = new Bundle(3);
+                            bundle.putInt("red",Integer.valueOf(red));
+                            bundle.putInt("green",Integer.valueOf(green));
+                            bundle.putInt("blue",Integer.valueOf(blue));
+                            tahService.requestCommand(COLOR_CMD,bundle);
                         }
                     }
 
@@ -208,30 +231,108 @@ public class MyAdapter extends RecyclerView.Adapter<ViewHolder> {
         }
     }
 
-    MyAdapter(List<Object> myDataset, Context mContext) {
+    /**
+     * ViewHolder qui contient les vues pour contrôler la connexion avec l'Arduino en BT.
+     */
+    private class ControlsViewHolder extends RecyclerView.ViewHolder {
+        FloatingActionButton refresh;
+        FloatingActionButton co_deco;
+        Switch mode;
+        ControlsViewHolder(View v){
+            super(v);
+            refresh = (FloatingActionButton) v.findViewById(R.id.fab_refresh);
+            co_deco = (FloatingActionButton) v.findViewById(R.id.fab_connect_disconnect);
+            mode = (Switch) v.findViewById(R.id.switch_mode) ;
+            final LinearLayout row1 = (LinearLayout) v.findViewById(R.id.linear_layout_row1);
+
+            refresh.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    if(tahService != null) {
+                        tahService.requestCommand(TEMP_AND_HUM_CMD,null);
+                        activity.onRefreshPending();
+                    }
+
+                    else
+                        Log.e(TAG,"Can't request update : service is null");
+                }
+            });
+
+            co_deco.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    if(activity != null) {
+                        if(mode.isChecked()){
+                            if(!BluetoothService.isRunning()) {
+                                tahService.connectToDevice();
+                                co_deco.setImageResource(R.drawable.ic_disconnect);
+                            }
+                            else {
+                                tahService.disconnectToDevice();
+                                co_deco.setImageResource(R.drawable.ic_connect);
+                            }
+
+                        }
+                    }
+                    else
+                        Log.e(TAG,"Activity is null : can't create service");
+                }
+            });
+
+            mode.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+                @Override
+                public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                    if(activity != null) {
+                        SharedPreferences sp = activity.getSharedPreferences(activity.getString(R.string.preference_connexion),MODE_PRIVATE);
+                        SharedPreferences.Editor editor = sp.edit();
+                        editor.putBoolean(activity.getString(R.string.preference_key_bt_mode),isChecked);
+                        editor.apply();
+                        tahService.setConnexionMode(isChecked? ConnectionMode.BT: ConnectionMode.PHONE);
+                    }
+                    refresh.setVisibility(isChecked? View.VISIBLE:View.GONE);
+                    co_deco.setVisibility(isChecked? View.VISIBLE:View.GONE);
+                    int padding_bot;
+                    if(isChecked)
+                        padding_bot = 0;
+                    else
+                        padding_bot = 20;
+                    row1.setPadding(row1.getPaddingLeft(),row1.getPaddingTop(),
+                            row1.getPaddingRight(),padding_bot);
+
+                }
+            });
+
+            SharedPreferences sp = activity.getSharedPreferences(activity.getString(R.string.preference_connexion),MODE_PRIVATE);
+            boolean bt_mode = sp.getBoolean(activity.getString(R.string.preference_key_bt_mode),false);
+            mode.setChecked(bt_mode);
+            refresh.setVisibility(bt_mode? View.VISIBLE:View.GONE);
+            co_deco.setVisibility(bt_mode? View.VISIBLE:View.GONE);
+        }
+        void bind(Object o) {
+            //nada
+        }
+    }
+
+    public MyAdapter(List<Object[]> myDataset, Context mContext, TempAndHumService service) {
         mDataset = myDataset;
         if(mContext instanceof MainActivity)
             activity = (MainActivity) mContext;
         else
             activity = null;
+        tahService = service;
     }
 
+    /**
+     * Retourne l'ID du type de vue
+     * @param position position dans la liste
+     * @return un int qui représente le type de vue
+     */
     @Override
     public int getItemViewType(int position) {
-        // retourne l'ID du type de vue
-        if(position == 0)
-            return MAIN_TITLE_VIEW_HOLDER;
-        Object o = mDataset.get(position);
-        if(o instanceof String) {
-            return TITLE_VIEW_HOLDER;
-        }
-        else if (o instanceof Stats){
-            return STATS_VIEW_HOLDER;
-        }
-        else if(o instanceof int[]){
-            return COLOR_SELECTOR_VIEW_HOLDER;
-        }
-        return ROTATE_VIEW_HOLDER;
+        Integer type = (Integer) mDataset.get(position)[0];
+        if(type != null)
+            return type;
+        else return -1;
     }
 
     @Override
@@ -253,6 +354,9 @@ public class MyAdapter extends RecyclerView.Adapter<ViewHolder> {
             case COLOR_SELECTOR_VIEW_HOLDER:
                 view = LayoutInflater.from(parent.getContext()).inflate(R.layout.list_color_selector_item,parent,false);
                 return new ColorSelectorViewHolder(view);
+            case CONTROLS_VIEW_HOLDER:
+                view = LayoutInflater.from(parent.getContext()).inflate(R.layout.list_controls_item,parent,false);
+                return  new ControlsViewHolder(view);
             default:
                 return null;
         }
@@ -264,31 +368,41 @@ public class MyAdapter extends RecyclerView.Adapter<ViewHolder> {
             case MAIN_TITLE_VIEW_HOLDER:
             case TITLE_VIEW_HOLDER:
                 TitleViewHolder viewHolder0 = (TitleViewHolder) holder;
-                viewHolder0.bind(mDataset.get(position));
+                viewHolder0.bind(mDataset.get(position)[1]);
                 StaggeredGridLayoutManager.LayoutParams layoutParams = (StaggeredGridLayoutManager.LayoutParams) viewHolder0.itemView.getLayoutParams();
                 layoutParams.setFullSpan(true);
                 break;
 
             case STATS_VIEW_HOLDER:
                 StatsViewHolder viewHolder1 = (StatsViewHolder) holder;
-                viewHolder1.bind(mDataset.get(position));
+                viewHolder1.bind(mDataset.get(position)[1]);
                 break;
             case ROTATE_VIEW_HOLDER:
                 RotateViewHolder viewHolder2 = (RotateViewHolder) holder;
-                viewHolder2.bind(mDataset.get(position));
+                viewHolder2.bind(mDataset.get(position)[1]);
                 StaggeredGridLayoutManager.LayoutParams layoutParams2 = (StaggeredGridLayoutManager.LayoutParams) viewHolder2.itemView.getLayoutParams();
                 layoutParams2.setFullSpan(true);
                 break;
             case COLOR_SELECTOR_VIEW_HOLDER:
                 ColorSelectorViewHolder viewHolder3 = (ColorSelectorViewHolder) holder;
-                viewHolder3.bind(mDataset.get(position));
+                viewHolder3.bind(mDataset.get(position)[1]);
                 StaggeredGridLayoutManager.LayoutParams layoutParams3 = (StaggeredGridLayoutManager.LayoutParams) viewHolder3.itemView.getLayoutParams();
                 layoutParams3.setFullSpan(true);
+                break;
+            case CONTROLS_VIEW_HOLDER:
+                ControlsViewHolder viewHolder4 = (ControlsViewHolder) holder;
+                StaggeredGridLayoutManager.LayoutParams layoutParams4 = (StaggeredGridLayoutManager.LayoutParams) viewHolder4.itemView.getLayoutParams();
+                layoutParams4.setFullSpan(true);
+                break;
         }
     }
 
     @Override
     public int getItemCount() {
         return mDataset.size();
+    }
+
+    public void setTahService(TempAndHumService service) {
+        tahService = service;
     }
 }

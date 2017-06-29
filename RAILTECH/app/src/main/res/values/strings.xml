@@ -6,4 +6,8 @@
     <string name="temp">%1$d C°.</string>
     <string name="rotate">%1$d°</string>
     <string name="preference_complications">com.sullygroup.arduinotest.PREFERENCE_COMPLICATIONS</string>
+    <string name="preference_connexion">com.sullygroup.arduinotest.PREFERENCE_CONNEXIONS</string>
+
+    <string name="preference_key_bt_mode">PREFERENCE_KEY_BT_MODE</string>
+
 </resources>

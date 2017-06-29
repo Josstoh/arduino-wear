@@ -1,4 +1,4 @@
-package com.sullygroup.arduinotest;
+package com.sullygroup.arduinotest.complications;
 
 import android.content.ComponentName;
 import android.support.wearable.complications.ProviderUpdateRequester;
@@ -6,12 +6,11 @@ import android.util.Log;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.common.data.FreezableUtils;
 import com.google.android.gms.wearable.DataEventBuffer;
 import com.google.android.gms.wearable.Wearable;
 import com.google.android.gms.wearable.WearableListenerService;
+import com.sullygroup.arduinotest.complications.TempAndHumProviderService;
 
-import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -19,12 +18,17 @@ import java.util.concurrent.TimeUnit;
  * tâche de fond. Et de pouvoir approvisionner {@link TempAndHumProviderService}
  * Created by jocelyn.caraman on 20/03/2017.
  */
-
 public class TempAndHumWearableListenerService extends WearableListenerService {
 
-    private static final String TAG = "DataLayerSample";
+    private static final String TAG = "TAHWearServ";
     private static final String START_ACTIVITY_PATH = "/start-activity";
     private static final String DATA_ITEM_RECEIVED_PATH = "/data-item-received";
+
+    @Override
+    public void onCreate() {
+        super.onCreate();
+        Log.d(TAG,"onCreate");
+    }
 
     @Override
     public void onDataChanged(DataEventBuffer dataEvents) {

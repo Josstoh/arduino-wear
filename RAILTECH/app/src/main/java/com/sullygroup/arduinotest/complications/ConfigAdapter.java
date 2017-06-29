@@ -1,6 +1,5 @@
-package com.sullygroup.arduinotest;
+package com.sullygroup.arduinotest.complications;
 
-import android.content.Context;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -8,17 +7,20 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import com.sullygroup.arduinotest.R;
+
 import java.util.List;
 
 /**
+ * Adapter pour le RecyclerView de la ComplicationConfigActivity.
  * Created by jocelyn.caraman on 07/04/2017.
  */
-
-public class ConfigAdapter extends RecyclerView.Adapter {
-    public static final String TAG = "ConfigAdapter";
-    private List<String> mDataset;
+class ConfigAdapter extends RecyclerView.Adapter {
+    private static final String TAG = "ConfigAdapter";
+    private List<String[]> mDataset;
     private ComplicationConfigActivity activity;
-    class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener{
+
+    private class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener{
         TextView mTextView;
         ViewHolder(View v) {
             super(v);
@@ -26,24 +28,23 @@ public class ConfigAdapter extends RecyclerView.Adapter {
             mTextView = (TextView) v.findViewById(R.id.title);
         }
         void bind(Object o) {
-            String s = (String) o;
-            mTextView.setText(s);
+            String[] s = (String[]) o;
+            mTextView.setText(s[1]);
         }
         @Override
         public void onClick(View view) {
-            Log.d(TAG, "onClick " + getAdapterPosition() + " " + mDataset.get(getAdapterPosition()));
             activity.handleItemClick(getAdapterPosition());
         }
     }
 
-    ConfigAdapter(List<String> myDataset,ComplicationConfigActivity mActivity) {
+    ConfigAdapter(List<String[]> myDataset,ComplicationConfigActivity mActivity) {
         mDataset = myDataset;
         activity = mActivity;
     }
 
     @Override
     public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.list_main_title_item,parent,false);
+        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.list_item_complication_config,parent,false);
         return new ViewHolder(view);
     }
 
